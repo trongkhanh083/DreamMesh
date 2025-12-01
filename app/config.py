@@ -14,8 +14,12 @@ class Settings:
         
         # feature flags
         self.enable_t23d: bool = os.getenv('ENABLE_T23D', 'true').lower() == 'true'
-        self.enable_flashvdm: bool = os.getenv('ENABLE_FLASHVDM', 'false').lower() == 'true'
-        self.low_vram_mode: bool = os.getenv('LOW_VRAM_MODE', 'false').lower() == 'true'
+        self.enable_flashvdm: bool = os.getenv('ENABLE_FLASHVDM', 'false').lower() == 'false'
+        self.low_vram_mode: bool = os.getenv('LOW_VRAM_MODE', 'true').lower() == 'true'
+        self.sequential_loading: bool = os.getenv('SEQUENTIAL_LOADING', 'true').lower() == 'true'
+
+        # memory optimization
+        self.max_concurrent_models: int = int(os.getenv("MAX_CONCURRENT_MODELS", "2"))
 
         # paths
         self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

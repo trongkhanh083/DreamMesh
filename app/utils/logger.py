@@ -58,4 +58,4 @@ def setup_logger(name: str, filename: str) -> logging.Logger:
     return logger
 
 # Create main application logger
-logger = setup_logger("hunyuan3d_api", "api_server.log")
+logger = setup_logger("dreammesh_api", "api_server.log")

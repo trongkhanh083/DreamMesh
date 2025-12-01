@@ -4,6 +4,7 @@ import torch
 import trimesh
 import uuid
 import base64
+import gc
 from PIL import Image
 from typing import Dict, Any
 from io import BytesIO
@@ -22,18 +23,26 @@ class GenerationService:
     def __init__(self):
         self.worker_id = str(uuid.uuid4())[:6]
         self.task_status: Dict[str, Dict[str, Any]] = {}
-        self._initialize_models()
+        self._models_initialized = False
+        self._initialize_models_sequentially()
 
-    def _initialize_models(self):
+    def _initialize_models_sequentially(self):
         """Initialize all models"""
         logger.info(f"Initialize models on worker {self.worker_id}...")
+
+        if settings.device == "cuda":
+            torch.cuda.empty_cache()
 
         # text-to-image pipeline
         self.txt2img = HunyuanDiTPipeline(
             'Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled',
             device=settings.device
         )
-        logger.info('Text-to-image pipeline loaded')
+        logger.info('Text-to-image enabled')
+
+        if settings.device == "cuda":
+            torch.cuda.empty_cache()
+            gc.collect()
 
         # background remover
         self.rembg = BackgroundRemover()
@@ -44,17 +53,25 @@ class GenerationService:
             subfolder=settings.subfolder,
             variant='fp16'
         )
-        logger.info('Shape pipeline loaded')
+        logger.info('Shape generation pipeline loaded')
 
         if settings.enable_flashvdm:
             self.pipeline.enable_flashvdm()
-        logger.info('FlashVDM enabled')
+            logger.info('FlashVDM enabled')
+
+        if settings.device == "cuda":
+            torch.cuda.empty_cache()
+            gc.collect()
 
         self.pipeline_tex = Hunyuan3DPaintPipeline.from_pretrained(settings.tex_model_path)
-        logger.info('Texture pipeline loaded')
+        logger.info('Texture generation pipeline loaded')
         
         if settings.low_vram_mode:
             self.pipeline_tex.enable_model_cpu_offload()
+
+        if settings.device == "cuda":
+            torch.cuda.empty_cache()
+            gc.collect()
 
         # mesh processors
         self.floater_remover = FloaterRemover()
@@ -78,6 +95,13 @@ class GenerationService:
         
     def start_text_to_3d_generation(self, task_id: str, params: TextTo3DRequest):
         """Start text-to-3D generation in background thread"""
+        
+        # init task status
+        self.task_status[task_id] = {
+            "status": "pending",
+            "message": "Starting generation..."
+        }
+        
         def generate_task():
             try:
                 self.task_status[task_id].update({
@@ -97,7 +121,7 @@ class GenerationService:
                 self.task_status[task_id].update({
                     "status": "completed",
                     "message": "Generation completed successfully",
-                    "download_url": f"/download/{task_id}",
+                    "download_url": f"/api/v1/download/{task_id}",
                     "file_path": file_path
                 })
 
@@ -108,16 +132,20 @@ class GenerationService:
                     "message": str(e)
                 })
 
-            # init task status
-            self.task_status[task_id] = {"status": "pending"}
-
-            # start generation thread
-            thread = threading.Thread(target=generate_task)
-            thread.daemon = True
-            thread.start()
+        # start generation thread
+        thread = threading.Thread(target=generate_task)
+        thread.daemon = True
+        thread.start()
 
     def start_image_to_3d_generation(self, task_id: str, image: Image.Image, params: ImageTo3DRequest):
         """Start image-to-3D generation in background thread"""
+        
+        # init task status
+        self.task_status[task_id] = {
+            "status": "pending",
+            "message": "Starting generation..."
+        }
+
         def generate_task():
             try:
                 self.task_status[task_id].update({
@@ -134,7 +162,7 @@ class GenerationService:
                 self.task_status[task_id].update({
                     "status": "completed",
                     "message": "Generation completed successfully",
-                    "download_url": f"/download/{task_id}",
+                    "download_url": f"/api/v1/download/{task_id}",
                     "file_path": file_path
                 })
 
@@ -145,13 +173,17 @@ class GenerationService:
                     "message": str(e)
                 })
 
-            # init task status
-            self.task_status[task_id] = {"status": "pending"}
+        # start generation thread
+        thread = threading.Thread(target=generate_task)
+        thread.daemon = True
+        thread.start()
 
-            # start generation thread
-            thread = threading.Thread(target=generate_task)
-            thread.daemon = True
-            thread.start()
+    def _clear_model_memory(self, model_name: str):
+        """Clear memory for specific model if not in use"""
+        if settings.low_vram_mode and settings.device == "cuda":
+            logger.info(f"Clearing memory for {model_name}")
+            torch.cuda.empty_cache()
+            gc.collect()
 
     def _generate_3d_model(self, image: Image.Image, params) -> trimesh.Trimesh:
         """Internal method to generate 3D model"""
@@ -168,9 +200,13 @@ class GenerationService:
             'output_type': params.output_type
         }
 
+        self._clear_model_memory("pre-shape-generation")
+
         mesh = self.pipeline(**shape_params)[0]
         shape_time = time.time() - start_time
         logger.info(f"Shape generation completed in {shape_time:.2f}s")
+
+        self._clear_model_memory("shape-generation")
 
         # apply mesh processing
         mesh = self.floater_remover(mesh)
@@ -178,10 +214,15 @@ class GenerationService:
         mesh = self.face_reducer(mesh)
 
         # apply texture
-        texture_start = time.time()
-        mesh = self.pipeline_tex(mesh, image)
-        texture_time = time.time() - texture_start
-        logger.info(f"Texture generation completed in {texture_time:.2f}s")
+        if getattr(params, 'enable_texture', True):
+            self._clear_model_memory("pre-texture-generation")
+
+            texture_start = time.time()
+            mesh = self.pipeline_tex(mesh, image)
+            texture_time = time.time() - texture_start
+            logger.info(f"Texture generation completed in {texture_time:.2f}s")
+
+            self._clear_model_memory("texture-generation")
 
         total_time = time.time() - start_time
         logger.info(f"Total generation time: {total_time:.2f}s")
@@ -201,6 +242,6 @@ class GenerationService:
     def get_file_path(self, task_id: str) -> str:
         """Get file path for completed task"""
         status = self.task_status.get(task_id, {})
-        raise status.get('file_path', '')
+        return status.get('file_path', '')
     
 generation_service = GenerationService()

@@ -7,7 +7,8 @@ class TextTo3DRequest(BaseModel):
     octree_resolution: Optional[int] = 380
     num_inference_steps: Optional[int] = 50
     num_chunks: Optional[int] = 20000
-    output_types: Optional[str] = 'trimesh'
+    output_type: Optional[str] = 'trimesh'
+    enable_texture: Optional[bool] = True
 
 class ImageTo3DRequest(BaseModel):
     seed: Optional[int] = 0
@@ -15,6 +16,7 @@ class ImageTo3DRequest(BaseModel):
     num_inference_steps: Optional[int] = 50
     num_chunks: Optional[int] = 20000
     output_type: Optional[str] = 'trimesh'
+    enable_texture: Optional[bool] = True
 
 class GenerationStatus(BaseModel):
     status: str

@@ -9,7 +9,7 @@ from app.api.endpoints import router as api_router
 from app.utils.logger import logger
 
 app = FastAPI(
-    title='Hunyuan3D-2 Reconstruction API',
+    title='DreamMesh API',
     description='Generate 3D models from text or images',
     version='1.0.0',
 )
@@ -43,11 +43,10 @@ async def health_check():
 @app.on_event('startup')
 async def startup_event():
     """Initialize services on startup"""
-    logger.info('Hunyuan3D-2 API server starting up...')
+    logger.info('DreamMesh API server starting up...')
     logger.info(f"Server running on {settings.host}:{settings.port}")
-    logger.info(f"Model {settings.model_path}")
 
 @app.on_event('shutdown')
 async def shutdown_event():
     """Cleanup on shutdown"""
-    logger.info('Hunyuan3D-2 API server shutting down...')
+    logger.info('DreamMesh API server shutting down...')

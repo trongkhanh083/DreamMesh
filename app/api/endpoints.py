@@ -30,7 +30,7 @@ async def text_to_3d(request: TextTo3DRequest):
     
     except Exception as e:
         logger.error(f"Error in text-to-3D: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
     
 @router.post('/image-to-3d', response_model=GenerationStatus)
 async def image_to_3d(
@@ -39,7 +39,8 @@ async def image_to_3d(
     octree_resolution: int = Form(380),
     num_inference_steps: int = Form(50),
     num_chunks: int = Form(20000),
-    output_type: str = Form('trimesh')
+    output_type: str = Form('trimesh'),
+    enable_texture: bool = Form(True)
 ):
     """Generate 3D model from uploaded image"""
     try:
@@ -55,7 +56,8 @@ async def image_to_3d(
             octree_resolution=octree_resolution,
             num_inference_steps=num_inference_steps,
             num_chunks=num_chunks,
-            output_type=output_type
+            output_type=output_type,
+            enable_texture=enable_texture
         )
 
         task_id = str(uuid.uuid4())
@@ -71,7 +73,7 @@ async def image_to_3d(
     
     except Exception as e:
         logger.error(f"Error in image-to-3D: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
     
 @router.get('/status/{task_id}', response_model=GenerationStatus)
 async def get_status(task_id: str):
