@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DreamMesh</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="importmap">
+        {
+            "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
@@ -14,7 +22,7 @@
         <header class="header">
             <div class="logo">
                 <i class="fas fa-cube"></i>
-                <h1>DreamMesh 3D</h1>
+                <h1>DreamMesh</h1>
             </div>
             <p class="tagline">Transform text and images into stunning 3D models with AI</p>
         </header>
@@ -42,29 +50,29 @@
                             <i class="fas fa-comment"></i> Text Prompt
                         </label>
                         <div class="input-with-icon">
-                            <textarea id="prompt" placeholder="Describe the 3D model you want to create..."></textarea>
+                            <textarea id="prompt" placeholder="Describe your 3D model..."></textarea>
                             <div class="char-count">0/500</div>
                         </div>
                         <div class="hint">
-                            <i class="fas fa-lightbulb"></i> Be descriptive! Example: "A cute cartoon cat with big eyes, wearing a bow tie, 3D style"
+                            <i class="fas fa-lightbulb"></i> Keep it simple! Example: "A fantasy dragon"
                         </div>
                     </div>
 
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="t2i-seed">
-                                <i class="fas fa-seedling"></i> Random Seed
+                                <i class="fas fa-seedling"></i> Seed
                             </label>
-                            <input type="number" id="t2i-seed" placeholder="0 for random" min="0">
+                            <input type="number" id="t2i-seed" placeholder="Empty for random" min="0">
                         </div>
                         <div class="form-group">
                             <label for="t2i-resolution">
                                 <i class="fas fa-cube"></i> Quality
                             </label>
                             <select id="t2i-resolution">
-                                <option value="128">Fast (Low)</option>
-                                <option value="256" selected>Balanced (Medium)</option>
-                                <option value="380">Detailed (High)</option>
+                                <option value="128">Fast</option>
+                                <option value="256" selected>Balanced</option>
+                                <option value="380">Detailed</option>
                             </select>
                         </div>
                     </div>
@@ -78,7 +86,7 @@
                     </div>
 
                     <button class="generate-btn" id="text-generate-btn" onclick="generateFromText()">
-                        <i class="fas fa-sparkles"></i> Generate 3D Model
+                        <i class="fas fa-sparkles"></i> Generate
                     </button>
                 </div>
 
@@ -110,18 +118,18 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="i2i-seed">
-                                <i class="fas fa-seedling"></i> Random Seed
+                                <i class="fas fa-seedling"></i> Seed
                             </label>
-                            <input type="number" id="i2i-seed" placeholder="0 for random" min="0">
+                            <input type="number" id="i2i-seed" placeholder="Empty for random" min="0">
                         </div>
                         <div class="form-group">
                             <label for="i2i-resolution">
                                 <i class="fas fa-cube"></i> Quality
                             </label>
                             <select id="i2i-resolution">
-                                <option value="128">Fast (Low)</option>
-                                <option value="256" selected>Balanced (Medium)</option>
-                                <option value="384">Detailed (High)</option>
+                                <option value="128">Fast</option>
+                                <option value="256" selected>Balanced</option>
+                                <option value="380">Detailed</option>
                             </select>
                         </div>
                     </div>
@@ -135,13 +143,13 @@
                     </div>
 
                     <button class="generate-btn" id="image-generate-btn" onclick="generateFromImage()" disabled>
-                        <i class="fas fa-sparkles"></i> Generate 3D Model
+                        <i class="fas fa-sparkles"></i> Generate
                     </button>
                 </div>
 
                 <div class="info-box">
                     <i class="fas fa-info-circle"></i>
-                    <p>Generation takes a few minutes depending on quality settings. Your model will be available for download after completion.</p>
+                    <p>Generation takes a few seconds depending on quality settings.</p>
                 </div>
             </section>
 
@@ -150,38 +158,19 @@
                 <div class="panel-header">
                     <h2><i class="fas fa-cube"></i> Generated Model</h2>
                     <div class="model-stats">
-                        <span id="model-info">No model generated yet</span>
+                        <span id="model-info">Result will display here</span>
                     </div>
                 </div>
 
-                <div class="model-viewer-container">
+                <div class="model-viewer-container" id="model-view-container">
                     <div id="placeholder-view" class="placeholder">
                         <i class="fas fa-cube placeholder-icon"></i>
-                        <h3>No 3D Model Yet</h3>
-                        <p>Generate your first 3D model to see it here</p>
+                        <p>Generate your first 3D model</p>
                     </div>
-                    <div id="model-view-container" class="hidden">
-                        <div class="viewer-controls">
-                            <button class="control-btn" onclick="rotateModel('left')">
-                                <i class="fas fa-rotate-left"></i>
-                            </button>
-                            <button class="control-btn" onclick="rotateModel('right')">
-                                <i class="fas fa-rotate-right"></i>
-                            </button>
-                            <button class="control-btn" onclick="zoomModel('in')">
-                                <i class="fas fa-search-plus"></i>
-                            </button>
-                            <button class="control-btn" onclick="zoomModel('out')">
-                                <i class="fas fa-search-minus"></i>
-                            </button>
-                            <button class="control-btn" onclick="resetView()">
-                                <i class="fas fa-undo"></i>
-                            </button>
-                        </div>
-                        <iframe id="model-viewer" class="model-viewer"></iframe>
-                    </div>
+                    
+                    <div id="threejs-container" class="hidden" style="width: 100%; height: 500px; border-radius: 8px; overflow: hidden;"></div>
                 </div>
-
+                
                 <!-- Status Section -->
                 <div class="status-section">
                     <div id="status-area"></div>
@@ -201,11 +190,11 @@
                             </div>
                             <div class="step" id="step-2">
                                 <div class="step-icon">2</div>
-                                <span>Generating Shape</span>
+                                <span>Gen Shape</span>
                             </div>
                             <div class="step" id="step-3">
                                 <div class="step-icon">3</div>
-                                <span>Generating Texture</span>
+                                <span>Gen Texture</span>
                             </div>
                             <div class="step" id="step-4">
                                 <div class="step-icon">4</div>
@@ -220,26 +209,6 @@
                             <button class="action-btn download-btn" onclick="downloadModel()">
                                 <i class="fas fa-download"></i> Download
                             </button>
-                            <button class="action-btn share-btn" onclick="shareModel()">
-                                <i class="fas fa-share"></i> Share
-                            </button>
-                            <button class="action-btn new-btn" onclick="resetGeneration()">
-                                <i class="fas fa-plus"></i> New
-                            </button>
-                        </div>
-                        <div class="model-info">
-                            <div class="info-item">
-                                <i class="fas fa-clock"></i>
-                                <span>Generation Time: <span id="gen-time">--</span></span>
-                            </div>
-                            <div class="info-item">
-                                <i class="fas fa-layer-group"></i>
-                                <span>Vertices: <span id="vertex-count">--</span></span>
-                            </div>
-                            <div class="info-item">
-                                <i class="fas fa-shapes"></i>
-                                <span>Faces: <span id="face-count">--</span></span>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -272,7 +241,7 @@
 
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
-
-    <script src="/static/js/main.js"></script>
+    
+    <script type="module" src="/static/js/main.js"></script>
 </body>
 </html>

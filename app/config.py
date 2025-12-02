@@ -14,7 +14,7 @@ class Settings:
         
         # feature flags
         self.enable_t23d: bool = os.getenv('ENABLE_T23D', 'true').lower() == 'true'
-        self.enable_flashvdm: bool = os.getenv('ENABLE_FLASHVDM', 'false').lower() == 'false'
+        self.enable_flashvdm: bool = os.getenv('ENABLE_FLASHVDM', 'true').lower() == 'false'
         self.low_vram_mode: bool = os.getenv('LOW_VRAM_MODE', 'true').lower() == 'true'
         self.sequential_loading: bool = os.getenv('SEQUENTIAL_LOADING', 'true').lower() == 'true'
 

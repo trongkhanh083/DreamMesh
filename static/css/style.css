@@ -80,6 +80,7 @@ body {
     font-size: 2.5rem;
     font-weight: 700;
     background: linear-gradient(135deg, #667eea, #764ba2);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -444,9 +445,12 @@ textarea {
 }
 
 .model-viewer-container {
-    background: white;
+    /* REPLACE the old dark background with this Studio Gradient */
+    background: radial-gradient(circle at 50% 50%, #ffffff 0%, #e2e8f0 100%);
+    
+    /* Keep the rest */
     border-radius: var(--radius);
-    padding: 2rem;
+    padding: 0; /* Remove padding to let canvas fill the space */
     box-shadow: var(--shadow);
     min-height: 400px;
     display: flex;
@@ -454,6 +458,7 @@ textarea {
     justify-content: center;
     margin-bottom: 2rem;
     position: relative;
+    overflow: hidden; /* Ensure rounded corners clip the canvas */
 }
 
 .placeholder {
@@ -891,4 +896,37 @@ textarea {
 .status-indicator.offline {
     background: var(--danger-color);
     animation: pulse 2s infinite;
+}
+
+/* Model Viewer Styles */
+model-viewer {
+    width: 100%;
+    height: 500px;
+    background-color: #404040; 
+    background-image: radial-gradient(circle at 50% 50%, #505050 0%, #303030 100%);
+    border-radius: var(--radius);
+    --poster-color: transparent;
+}
+
+model-viewer::part(default-progress-bar) {
+    height: 5px;
+    background-color: var(--primary-color);
+}
+
+model-viewer::part(default-progress-mask) {
+    height: 5px;
+}
+
+/* Loading animation */
+model-viewer::part(default-ar-button) {
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--radius-sm);
+}
+
+/* Responsive model viewer */
+@media (max-width: 768px) {
+    model-viewer {
+        height: 300px;
+    }
 }

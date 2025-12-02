@@ -84,6 +84,23 @@ async def get_status(task_id: str):
     
     return status
 
+@router.get('/view/{task_id}')
+async def view_model(task_id: str):
+    """View generated 3D model in browser"""
+    status = generation_service.get_task_status(task_id)
+    if status.get('status') != 'completed':
+        raise HTTPException(status_code=400, detail='File not ready')
+    
+    file_path = status.get('file_path', '')
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail='File not found')
+    
+    return FileResponse(
+        file_path,
+        media_type='model/gltf-binary',
+        content_disposition_type='inline',
+    )
+
 @router.get('/download/{task_id}')
 async def download_file(task_id: str):
     """Download generated 3D model"""
@@ -97,6 +114,7 @@ async def download_file(task_id: str):
     
     return FileResponse(
         file_path,
-        filename=f"demo_{task_id}.glb",
-        media_type='model/gltf-binary'
+        filename=f"demo_{task_id[:8]}.glb",
+        media_type='model/gltf-binary',
+        content_disposition_type='attachment',
     )
