@@ -1,0 +1,14 @@
+tunnel: dreammesh-tunnel
+
+ingress:
+  - hostname: dreammesh-{{ hostname }}.trycloudflare.com
+    service: https://nginx-proxy:80
+    originRequest:
+      originServerName: localhost
+      noTLSVerify: true  # Bypass SSL verification for self-signed certs
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      httpHostHeader: nginx-proxy:443
+  
+  # Catch-all rule
+  - service: http_status:404

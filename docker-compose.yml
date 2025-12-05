@@ -1,0 +1,64 @@
+services:
+  dreammesh-api:
+    build: .
+    container_name: dreammesh-api
+    ports:
+      - "8081:8081"
+    environment:
+      - DEVICE=cuda
+
+      - MODEL_PATH=tencent/Hunyuan3D-2mini
+      - SUBFOLDER=hunyuan3d-dit-v2-mini-turbo
+      - TEX_MODEL_PATH=tencent/Hunyuan3D-2
+
+      - ENABLE_T23D=true
+      - LOW_VRAM_MODE=true
+      - ENABLE_FLASHVDM=true
+      - SEQUENTIAL_LOADING=true
+      - MAX_CONCURRENT_MODELS=2
+
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    volumes:
+      - ./static:/app/static
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+      - ./cache:/root/.cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: on-failure
+    networks:
+      - dreammesh-network
+
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: dreammesh-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/app/static:ro
+    depends_on:
+      - dreammesh-api
+    restart: unless-stopped
+    networks:
+      - dreammesh-network
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: dreammesh-cloudflared
+    restart: unless-stopped
+    command: tunnel --url http://nginx-proxy:80
+    depends_on:
+      - nginx-proxy
+    networks:
+      - dreammesh-network
+
+networks:
+  dreammesh-network:
+    driver: bridge
