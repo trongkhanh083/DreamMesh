@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,6 +39,11 @@ async def read_root(request: Request):
 async def health_check():
     """Health check endpoint"""
     return {'status': 'API is running'}
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    """Serve favicon"""
+    return FileResponse('static/icons8-3d-16.png')
 
 @app.on_event('startup')
 async def startup_event():
