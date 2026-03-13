@@ -1,4 +1,4 @@
-# 🎨 DreamMesh: Production-Ready 3D Generation Server
+# 🎨 DreamMesh
 
 ![DreamMesh Demo](static/demo.png)
 
