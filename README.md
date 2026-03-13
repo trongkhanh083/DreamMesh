@@ -14,6 +14,8 @@
 
 ---
 
+**GPU Recommendation**: NVIDIA GPU with 24GB+ VRAM (e.g., RTX 3090/4090)
+
 ## 🚀 Quick Start
 
 ### 1. Create conda environment
@@ -51,4 +53,4 @@ cloudflared tunnel --url http://0.0.0.0:8081
 
 ## 📜 Acknowledgments
 
-**This project is built upon the incredible foundation provided by the [![Hunyuan3D-2](https://img.shields.io/badge/Engine-Hunyuan3D--2.0-blue)](https://github.com/Tencent-Hunyuan/Hunyuan3D-2)**
+**This project is built upon the incredible foundation provided by the [![Hunyuan3D-2](https://img.shields.io/badge/Hunyuan3D-2.0-blue)](https://github.com/Tencent-Hunyuan/Hunyuan3D-2)**
